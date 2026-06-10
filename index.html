@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDS Institucional — Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ─── Navbar ───────────────────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <a class="brand" href="#">
+    <i class="fas fa-shield-halved"></i>
+    IDS Institucional
+  </a>
+  <span class="brand-sub">Sistema de Deteccion de Intrusos</span>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" id="tab-monitor" onclick="switchView('monitor')">
+      <i class="fas fa-display"></i> Monitor
+    </button>
+    <button class="tab-btn" id="tab-control" onclick="switchView('control')">
+      <i class="fas fa-sliders"></i> Control
+    </button>
+  </div>
+
+  <div class="navbar-right">
+    <div class="conn-pill">
+      <div class="conn-dot ok" id="conn-dot"></div>
+      <span id="conn-lbl">Conectando...</span>
+    </div>
+    <div class="clock"><i class="far fa-clock"></i> <span id="clock">--:--:--</span></div>
+  </div>
+</nav>
+
+<!-- ─── Toasts ────────────────────────────────────────────────────────────────── -->
+<div class="toast-wrap" id="toasts"></div>
+
+<!-- ─── Modal ────────────────────────────────────────────────────────────────── -->
+<div class="backdrop" id="backdrop">
+  <div class="modal">
+    <div class="modal-ttl" id="m-ttl">
+      <i class="fas fa-triangle-exclamation"></i> Confirmar accion
+    </div>
+    <div class="modal-body" id="m-body">Esta accion es irreversible. Desea continuar?</div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" id="m-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Main ──────────────────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       MONITOR VIEW
+  ═══════════════════════════════════════════════════════════════════════════ -->
+  <div id="view-monitor" class="view active">
+
+    <div class="page-hdr">
+      <div>
+        <h1>Monitor de Red</h1>
+        <p>Vista en tiempo real del estado de la red. Actualiza cada 5 segundos.</p>
+      </div>
+      <div class="last-upd" id="last-upd">
+        <i class="fas fa-rotate"></i> Esperando datos...
+      </div>
+    </div>
+
+    <div class="prog-bar"><div class="prog-fill" id="prog" style="width:100%"></div></div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+
+      <div class="stat-card">
+        <div class="stat-ico ico-blue"><i class="fas fa-globe"></i></div>
+        <div>
+          <div class="stat-lbl">
+            <span class="tip-wrap">
+              Consultas DNS totales
+              <i class="fas fa-circle-info tip-ico"></i>
+              <span class="tip-box">Numero de veces que los dispositivos buscaron una direccion en Internet desde que el sistema esta activo.</span>
+            </span>
+          </div>
+          <div class="stat-val" id="s-dns">—</div>
+          <div class="stat-desc">Desde el inicio del monitoreo</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-ico ico-green"><i class="fas fa-link"></i></div>
+        <div>
+          <div class="stat-lbl">
+            <span class="tip-wrap">
+              Sitios unicos visitados
+              <i class="fas fa-circle-info tip-ico"></i>
+              <span class="tip-box">Cantidad de sitios web o servicios de Internet distintos a los que se conectaron los equipos.</span>
+            </span>
+          </div>
+          <div class="stat-val" id="s-dom">—</div>
+          <div class="stat-desc">Dominios distintos detectados</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-ico ico-yellow"><i class="fas fa-network-wired"></i></div>
+        <div>
+          <div class="stat-lbl">
+            <span class="tip-wrap">
+              Dispositivos activos
+              <i class="fas fa-circle-info tip-ico"></i>
+              <span class="tip-box">Equipos (computadoras, celulares, impresoras, etc.) que estan generando trafico de red en este momento.</span>
+            </span>
+          </div>
+          <div class="stat-val" id="s-ips">—</div>
+          <div class="stat-desc">Equipos conectados ahora</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-ico ico-red"><i class="fas fa-triangle-exclamation"></i></div>
+        <div>
+          <div class="stat-lbl">
+            <span class="tip-wrap">
+              Alertas activas
+              <i class="fas fa-circle-info tip-ico"></i>
+              <span class="tip-box">Situaciones sospechosas o peligrosas que el sistema detecto y que requieren atencion del administrador.</span>
+            </span>
+          </div>
+          <div class="stat-val" id="s-alr">—</div>
+          <div class="stat-desc">Eventos que requieren atencion</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Traffic light -->
+    <div class="card">
+      <div class="card-hdr">
+        <i class="fas fa-traffic-light" style="color:var(--blue2)"></i>
+        <span class="card-title">Estado General de la Red — Semaforo de Seguridad</span>
+      </div>
+      <div class="card-body">
+        <div class="tl-section">
+
+          <div class="tl-casing">
+            <div class="light l-red"    id="l-red"></div>
+            <div class="light l-yellow" id="l-yellow"></div>
+            <div class="light l-green"  id="l-green"></div>
+            <div class="tl-label">Estado</div>
+          </div>
+
+          <div class="tl-info">
+            <div class="status-banner green" id="sb">
+              <i class="fas fa-shield-check sb-icon" id="sb-ico"></i>
+              <div>
+                <div class="sb-title" id="sb-ttl">Red Segura</div>
+                <div class="sb-desc"  id="sb-desc">No se han detectado amenazas. La red funciona con normalidad.</div>
+              </div>
+            </div>
+            <div class="alerts-list" id="alerts-list">
+              <div class="no-alerts">
+                <i class="fas fa-circle-check" style="color:var(--green);margin-right:5px;"></i>
+                No hay alertas activas
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- DNS table -->
+    <div class="card">
+      <div class="card-hdr">
+        <i class="fas fa-list-ul" style="color:var(--blue2)"></i>
+        <span class="card-title">Consultas de Red Recientes</span>
+        <span class="card-badge" id="q-count">0</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><span class="tip-wrap">Hora <i class="fas fa-circle-info tip-ico"></i><span class="tip-box">Momento exacto en que el dispositivo hizo la consulta.</span></span></th>
+              <th><span class="tip-wrap">Dispositivo <i class="fas fa-circle-info tip-ico"></i><span class="tip-box">Identificador del equipo dentro de la red que realizo la consulta.</span></span></th>
+              <th><span class="tip-wrap">Sitio consultado <i class="fas fa-circle-info tip-ico"></i><span class="tip-box">Pagina web o servicio al que intento acceder el dispositivo.</span></span></th>
+              <th><span class="tip-wrap">Tipo <i class="fas fa-circle-info tip-ico"></i><span class="tip-box">Clase de consulta. "A" significa busqueda de un sitio web por nombre.</span></span></th>
+              <th><span class="tip-wrap">Estado <i class="fas fa-circle-info tip-ico"></i><span class="tip-box">Normal = sin riesgo. No autorizado = dispositivo fuera de la lista blanca.</span></span></th>
+            </tr>
+          </thead>
+          <tbody id="dns-body">
+            <tr><td colspan="5"><div class="empty"><i class="fas fa-satellite-dish"></i><p>Esperando datos del servidor...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /view-monitor -->
+
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       CONTROL VIEW
+  ═══════════════════════════════════════════════════════════════════════════ -->
+  <div id="view-control" class="view">
+
+    <div class="page-hdr">
+      <div>
+        <h1>Panel de Control</h1>
+        <p>Administracion de listas de acceso y configuracion del sistema IDS.</p>
+      </div>
+    </div>
+
+    <div class="ctrl-grid">
+
+      <!-- Whitelist add -->
+      <div class="card">
+        <div class="card-hdr">
+          <i class="fas fa-shield-check" style="color:var(--green)"></i>
+          <span class="card-title">Agregar a Lista Blanca</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.76rem;color:var(--txt3);margin-bottom:13px;">
+            Dispositivos autorizados cuyo trafico no genera alertas.
+          </p>
+
+          <div class="fgroup">
+            <label class="flabel"><i class="fas fa-tags"></i> Tipo de entrada</label>
+            <div class="type-sel">
+              <button class="type-tag sel" data-wlt="ip" onclick="selWlType(this)">
+                <i class="fas fa-circle-nodes"></i> Direccion IP
+              </button>
+              <button class="type-tag" data-wlt="mac" onclick="selWlType(this)">
+                <i class="fas fa-microchip"></i> MAC Address
+              </button>
+            </div>
+          </div>
+
+          <div class="fgroup">
+            <label class="flabel" for="wl-val"><i class="fas fa-keyboard"></i> Valor</label>
+            <input class="finput" id="wl-val" type="text"
+              placeholder="Ej: 192.168.1.100" autocomplete="off">
+            <div class="fhelper" id="wl-help">Ingrese la direccion IP del dispositivo a autorizar.</div>
+          </div>
+
+          <div class="fgroup">
+            <label class="flabel" for="wl-desc"><i class="fas fa-comment"></i> Descripcion (opcional)</label>
+            <input class="finput" id="wl-desc" type="text"
+              placeholder="Ej: Laptop del director, Impresora sala A">
+          </div>
+
+          <button class="btn btn-ok btn-full" onclick="addWhitelist()">
+            <i class="fas fa-plus"></i> Agregar a lista blanca
+          </button>
+        </div>
+      </div>
+
+      <!-- Blacklist add -->
+      <div class="card">
+        <div class="card-hdr">
+          <i class="fas fa-ban" style="color:var(--red)"></i>
+          <span class="card-title">Agregar a Lista Negra</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.76rem;color:var(--txt3);margin-bottom:13px;">
+            Direcciones IP bloqueadas. Su trafico generara alertas criticas.
+          </p>
+
+          <div class="fgroup">
+            <label class="flabel" for="bl-ip"><i class="fas fa-circle-nodes"></i> Direccion IP a bloquear</label>
+            <input class="finput" id="bl-ip" type="text"
+              placeholder="Ej: 203.0.113.45" autocomplete="off">
+            <div class="fhelper">Ingrese la IP externa o interna a bloquear.</div>
+          </div>
+
+          <div class="fgroup">
+            <label class="flabel" for="bl-reason"><i class="fas fa-clipboard"></i> Motivo del bloqueo</label>
+            <input class="finput" id="bl-reason" type="text"
+              placeholder="Ej: IP asociada a malware detectado">
+          </div>
+
+          <div class="fgroup">
+            <label class="flabel" for="bl-sev"><i class="fas fa-gauge"></i> Nivel de amenaza</label>
+            <select class="fselect" id="bl-sev">
+              <option value="high">Alto — Bloqueo inmediato</option>
+              <option value="medium">Medio — Monitorear y alertar</option>
+              <option value="low">Bajo — Solo registrar</option>
+            </select>
+          </div>
+
+          <button class="btn btn-danger btn-full" onclick="addBlacklist()">
+            <i class="fas fa-ban"></i> Agregar a lista negra
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /ctrl-grid -->
+
+    <div class="ctrl-grid">
+
+      <!-- Admin config -->
+      <div class="card">
+        <div class="card-hdr">
+          <i class="fas fa-gear" style="color:var(--yellow)"></i>
+          <span class="card-title">Configuracion del Sistema</span>
+        </div>
+        <div class="card-body">
+
+          <div class="fgroup">
+            <label class="flabel" for="adm-email"><i class="fas fa-envelope"></i> Correo del administrador</label>
+            <input class="finput" id="adm-email" type="email"
+              placeholder="admin@institucion.edu" autocomplete="off">
+            <div class="fhelper">Las alertas criticas se enviaran a este correo.</div>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="saveEmail()" style="margin-bottom:14px;">
+            <i class="fas fa-floppy-disk"></i> Guardar correo
+          </button>
+
+          <div class="divider"></div>
+
+          <div style="margin-bottom:10px;">
+            <div style="font-size:.84rem;font-weight:600;margin-bottom:3px;">Gestion de registros</div>
+            <div style="font-size:.73rem;color:var(--txt3);">
+              Elimina todos los registros de eventos del sistema. Esta accion es permanente e irreversible.
+            </div>
+          </div>
+
+          <button class="btn btn-warn btn-full" onclick="confirmClearLogs()">
+            <i class="fas fa-trash-can"></i> Limpiar todos los logs
+          </button>
+
+        </div>
+      </div>
+
+      <!-- System status -->
+      <div class="card">
+        <div class="card-hdr">
+          <i class="fas fa-server" style="color:var(--blue2)"></i>
+          <span class="card-title">Estado del Sistema</span>
+        </div>
+        <div class="card-body">
+          <div class="sys-row">
+            <span class="sys-row-lbl"><i class="fas fa-plug"></i> API Backend</span>
+            <span class="badge b-ok" id="api-badge"><i class="fas fa-circle"></i> En linea</span>
+          </div>
+          <div class="sys-row">
+            <span class="sys-row-lbl"><i class="fas fa-rotate"></i> Actualizacion automatica</span>
+            <span class="badge b-info"><i class="fas fa-circle"></i> Cada 5 seg</span>
+          </div>
+          <div class="sys-row">
+            <span class="sys-row-lbl"><i class="fas fa-shield"></i> Modo proteccion</span>
+            <span class="badge b-ok"><i class="fas fa-circle"></i> Activo</span>
+          </div>
+          <div class="sys-row">
+            <span class="sys-row-lbl"><i class="fas fa-calendar"></i> Ultima sincronizacion</span>
+            <span style="font-size:.74rem;color:var(--txt3);" id="ctrl-upd">—</span>
+          </div>
+          <div class="sys-row">
+            <span class="sys-row-lbl"><i class="fas fa-location-dot"></i> Servidor</span>
+            <span class="code-tag">192.168.1.80:5000</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /ctrl-grid -->
+
+    <!-- Whitelist table -->
+    <div class="card">
+      <div class="card-hdr">
+        <i class="fas fa-list-check" style="color:var(--green)"></i>
+        <span class="card-title">Lista Blanca Actual</span>
+        <span class="card-badge" id="wl-count">0 entradas</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="loadWhitelist()">
+          <i class="fas fa-rotate"></i> Actualizar
+        </button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th>Descripcion</th>
+              <th>Fecha de alta</th>
+              <th style="text-align:center;">Accion</th>
+            </tr>
+          </thead>
+          <tbody id="wl-body">
+            <tr><td colspan="5"><div class="empty"><i class="fas fa-list-check"></i><p>Cargando lista blanca...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /view-control -->
+
+</main>
+
+<script src="js/app.js"></script>
+</body>
+</html>
