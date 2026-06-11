@@ -94,7 +94,7 @@ function render(d) {
      - amarillo: hay consultas no autorizadas (alertas)
      - verde  : sin incidencias */
   const amenazas   = Array.isArray(d.amenazas) ? d.amenazas : [];
-  const hayPeligro = amenazas.some(a => a.detectada);
+  const hayPeligro = amenazas.some(a => a.detectada === true || a.detectada === 1);
   const lvl = hayPeligro ? 'red' : alertArr.length > 0 ? 'yellow' : 'green';
   setLight(lvl);
 
@@ -132,8 +132,8 @@ function setLight(lvl) {
     document.getElementById('l-red').classList.add('on');
     sb.classList.add('red');
     ico.className  = 'fas fa-circle-exclamation sb-icon';
-    ttl.textContent  = 'Peligro — Amenaza Detectada';
-    desc.textContent = 'Se detecto actividad maliciosa. Contacte al administrador de inmediato.';
+    ttl.textContent  = 'Amenaza Critica — Accion requerida de inmediato';
+    desc.textContent = 'Se detecto trafico hacia una IP peligrosa conocida. Notifique al administrador de red de inmediato.';
   } else if (isWarning) {
     document.getElementById('l-yellow').classList.add('on');
     sb.classList.add('yellow');
@@ -261,7 +261,7 @@ async function addWhitelist() {
   if (wlType === 'ip'  && !validIP(val))  { toast('Formato de IP invalido. Ej: 192.168.1.100', 'err'); return; }
   if (wlType === 'mac' && !validMAC(val)) { toast('Formato MAC invalido. Ej: AA:BB:CC:DD:EE:FF', 'err'); return; }
   try {
-    const r = await apiFetch('POST', '/api/whitelist', { type: wlType, value: val, description: desc });
+    const r = await apiFetch('POST', '/api/whitelist', { tipo: wlType, valor: val, descripcion: desc });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     toast('"' + val + '" agregado a la lista blanca.', 'ok');
     document.getElementById('wl-val').value  = '';
@@ -278,25 +278,26 @@ async function loadWhitelist() {
     const r = await apiFetch('GET', '/api/whitelist');
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d   = await r.json();
-    const arr = d.entries ?? d.whitelist ?? (Array.isArray(d) ? d : []);
+    const arr = d.dispositivos ?? [];
     if (cnt) cnt.textContent = arr.length + ' entrada' + (arr.length !== 1 ? 's' : '');
     if (!arr.length) {
       tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="fas fa-list-check"></i><p>La lista blanca esta vacia.</p></div></td></tr>';
       return;
     }
     tbody.innerHTML = arr.map(e => {
-      const id   = escA(e.id ?? e._id ?? e.value ?? '');
-      const typ  = String(e.type ?? 'ip').toUpperCase();
-      const val  = esc(e.value ?? e.ip ?? e.mac ?? '');
-      const desc = esc(e.description ?? e.descripcion ?? '—');
-      const dt   = e.created_at ?? e.createdAt ?? e.date ?? '';
+      const ip   = esc(e.ip  ?? '');
+      const mac  = esc(e.mac ?? '');
+      const id   = escA(ip || mac);
+      const val  = ip || mac;
+      const desc = esc(e.nombre ?? '—');
+      const dt   = esc(e.created_at ?? '');
       return `<tr>
-        <td><span class="badge ${typ === 'MAC' ? 'b-info' : 'b-ok'}">
-          <i class="fas fa-${typ === 'MAC' ? 'microchip' : 'circle-nodes'}"></i> ${typ}
+        <td><span class="badge b-ok">
+          <i class="fas fa-circle-nodes"></i> IP
         </span></td>
         <td><span class="code-tag">${val}</span></td>
         <td class="dim">${desc}</td>
-        <td class="dim">${dt ? esc(fmtDate(dt)) : '—'}</td>
+        <td class="dim">${dt || '—'}</td>
         <td style="text-align:center">
           <button class="btn btn-danger btn-sm" onclick="removeWL('${id}','${val}')">
             <i class="fas fa-trash"></i> Eliminar
