@@ -191,9 +191,21 @@ body {
   background: #08090e; border: 1px solid var(--border);
   border-radius: 14px; padding: 18px 14px;
   display: flex; flex-direction: column; align-items: center; gap: 10px;
-  min-width: 72px;
+  min-width: 120px;
 }
 .tl-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: .1em; color: var(--txt3); }
+
+.tl-legend { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+.tl-legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.65rem; color: var(--txt3);
+}
+.tl-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.tl-dot-red    { background: var(--red); }
+.tl-dot-yellow { background: var(--yellow); }
+.tl-dot-green  { background: var(--green); }
 
 .light {
   width: 46px; height: 46px; border-radius: 50%;
@@ -289,6 +301,7 @@ td.dim { color: var(--txt2); font-size: 0.78rem; }
 .b-warn { background: rgba(245,158,11,.1);  color: var(--yellow); }
 .b-err  { background: rgba(239,68,68,.1);   color: var(--red); }
 .b-info { background: rgba(59,130,246,.1);  color: var(--blue2); }
+.b-muted { background: rgba(107,114,128,.1); color: var(--txt2); }
 
 .code-tag {
   font-family: 'Courier New', monospace; font-size: 0.8em;

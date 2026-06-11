@@ -184,21 +184,55 @@ function renderDns(qs) {
   }
 
   tbody.innerHTML = qs.slice(0, 60).map(q => {
-    /* autorizado: 1 = normal, 0 = no autorizado */
-    const auth = q.autorizado;
-    const cls  = auth === 0 || auth === '0' || auth === false ? 'b-err' : 'b-ok';
-    const lbl  = cls === 'b-err' ? 'No autorizado' : 'Normal';
-    const ico  = cls === 'b-err' ? 'fa-circle-xmark' : 'fa-circle-check';
-    const ts   = q.timestamp ? fmtTime(q.timestamp) : '—';
-    const ip   = esc(q.ip_origen  ?? '—');
-    const dom  = esc(q.dominio    ?? '—');
-    const typ  = esc(q.tipo_query ?? 'A');
+    /* ── Estado ── */
+    const auth  = q.autorizado;
+    const isErr = auth === 0 || auth === '0' || auth === false;
+    const stCls = isErr ? 'b-err' : 'b-ok';
+    const stLbl = isErr
+      ? '<i class="fas fa-triangle-exclamation"></i> Alerta'
+      : '<i class="fas fa-circle-check"></i> Normal';
+
+    /* ── Hora ── */
+    const ts = q.timestamp ? fmtTime(q.timestamp) : '—';
+
+    /* ── Dispositivo ── */
+    const rawIp = q.ip_origen ?? '—';
+    let ipCell;
+    if (rawIp.startsWith('fe80::')) {
+      ipCell = `<span class="tip-wrap" style="cursor:default">
+        <span style="color:var(--txt2)">Dispositivo Local</span>
+        <i class="fas fa-circle-info tip-ico"></i>
+        <span class="tip-box">Direccion interna del equipo: ${esc(rawIp)}</span>
+      </span>`;
+    } else if (rawIp.startsWith('2806:') || rawIp.startsWith('192.168.')) {
+      const short = rawIp.slice(-4);
+      ipCell = `<span class="tip-wrap" style="cursor:default">
+        <span class="code-tag">...${esc(short)}</span>
+        <i class="fas fa-circle-info tip-ico"></i>
+        <span class="tip-box">IP completa: ${esc(rawIp)}</span>
+      </span>`;
+    } else {
+      ipCell = `<span class="code-tag">${esc(rawIp)}</span>`;
+    }
+
+    /* ── Tipo ── */
+    const rawTyp = String(q.tipo_query ?? 'A').toUpperCase();
+    let typCell;
+    if (['A', 'AAAA', '65'].includes(rawTyp)) {
+      typCell = `<span class="badge b-info"><i class="fas fa-globe"></i> Busqueda web</span>`;
+    } else if (rawTyp === 'PTR') {
+      typCell = `<span class="badge b-muted"><i class="fas fa-network-wired"></i> Red local</span>`;
+    } else {
+      typCell = `<span class="badge b-info">${esc(rawTyp)}</span>`;
+    }
+
+    const dom = esc(q.dominio ?? '—');
     return `<tr>
       <td class="dim" style="font-family:monospace">${esc(ts)}</td>
-      <td><span class="code-tag">${ip}</span></td>
+      <td>${ipCell}</td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${dom}">${dom}</td>
-      <td><span class="badge b-info">${typ}</span></td>
-      <td><span class="badge ${cls}"><i class="fas ${ico}"></i> ${lbl}</span></td>
+      <td>${typCell}</td>
+      <td><span class="badge ${stCls}">${stLbl}</span></td>
     </tr>`;
   }).join('');
 }

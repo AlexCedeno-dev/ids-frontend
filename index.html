@@ -86,7 +86,7 @@
             </span>
           </div>
           <div class="stat-val" id="s-dns">—</div>
-          <div class="stat-desc">Desde el inicio del monitoreo</div>
+          <div class="stat-desc">Sitios buscados desde el inicio</div>
         </div>
       </div>
 
@@ -101,7 +101,7 @@
             </span>
           </div>
           <div class="stat-val" id="s-dom">—</div>
-          <div class="stat-desc">Dominios distintos detectados</div>
+          <div class="stat-desc">Sitios web diferentes visitados</div>
         </div>
       </div>
 
@@ -131,7 +131,7 @@
             </span>
           </div>
           <div class="stat-val" id="s-alr">—</div>
-          <div class="stat-desc">Eventos que requieren atencion</div>
+          <div class="stat-desc">Situaciones que requieren atencion</div>
         </div>
       </div>
 
@@ -151,6 +151,11 @@
             <div class="light l-yellow" id="l-yellow"></div>
             <div class="light l-green"  id="l-green"></div>
             <div class="tl-label">Estado</div>
+            <div class="tl-legend">
+              <div class="tl-legend-item"><span class="tl-dot tl-dot-red"></span>Amenaza critica</div>
+              <div class="tl-legend-item"><span class="tl-dot tl-dot-yellow"></span>Actividad inusual</div>
+              <div class="tl-legend-item"><span class="tl-dot tl-dot-green"></span>Red segura</div>
+            </div>
           </div>
 
           <div class="tl-info">
@@ -223,7 +228,7 @@
         </div>
         <div class="card-body">
           <p style="font-size:.76rem;color:var(--txt3);margin-bottom:13px;">
-            Dispositivos autorizados cuyo trafico no genera alertas.
+            Los equipos en esta lista son de confianza. El sistema no generara alertas cuando se conecten.
           </p>
 
           <div class="fgroup">
@@ -236,19 +241,21 @@
                 <i class="fas fa-microchip"></i> MAC Address
               </button>
             </div>
+            <div class="fhelper">Elija si identificara el equipo por su direccion IP (numero que lo ubica en la red) o por su MAC (codigo unico grabado en el hardware del dispositivo).</div>
           </div>
 
           <div class="fgroup">
             <label class="flabel" for="wl-val"><i class="fas fa-keyboard"></i> Valor</label>
             <input class="finput" id="wl-val" type="text"
               placeholder="Ej: 192.168.1.100" autocomplete="off">
-            <div class="fhelper" id="wl-help">Ingrese la direccion IP del dispositivo a autorizar.</div>
+            <div class="fhelper" id="wl-help">Ingrese la direccion IP del dispositivo a autorizar. Puede verla en Configuracion de red del equipo.</div>
           </div>
 
           <div class="fgroup">
             <label class="flabel" for="wl-desc"><i class="fas fa-comment"></i> Descripcion (opcional)</label>
             <input class="finput" id="wl-desc" type="text"
               placeholder="Ej: Laptop del director, Impresora sala A">
+            <div class="fhelper">Escriba un nombre que le ayude a identificar este equipo mas adelante, por ejemplo su ubicacion o quien lo usa.</div>
           </div>
 
           <button class="btn btn-ok btn-full" onclick="addWhitelist()">
@@ -265,20 +272,21 @@
         </div>
         <div class="card-body">
           <p style="font-size:.76rem;color:var(--txt3);margin-bottom:13px;">
-            Direcciones IP bloqueadas. Su trafico generara alertas criticas.
+            Cualquier equipo con estas IPs generara una alerta critica automaticamente al conectarse.
           </p>
 
           <div class="fgroup">
             <label class="flabel" for="bl-ip"><i class="fas fa-circle-nodes"></i> Direccion IP a bloquear</label>
             <input class="finput" id="bl-ip" type="text"
               placeholder="Ej: 203.0.113.45" autocomplete="off">
-            <div class="fhelper">Ingrese la IP externa o interna a bloquear.</div>
+            <div class="fhelper">Escriba la IP del equipo o servidor que desea vigilar. Puede obtenerla del reporte de alertas o de la tabla de consultas DNS.</div>
           </div>
 
           <div class="fgroup">
             <label class="flabel" for="bl-reason"><i class="fas fa-clipboard"></i> Motivo del bloqueo</label>
             <input class="finput" id="bl-reason" type="text"
               placeholder="Ej: IP asociada a malware detectado">
+            <div class="fhelper">Escriba brevemente por que bloquea esta IP. Esto quedara registrado para que otros administradores entiendan el motivo.</div>
           </div>
 
           <div class="fgroup">
@@ -288,6 +296,7 @@
               <option value="medium">Medio — Monitorear y alertar</option>
               <option value="low">Bajo — Solo registrar</option>
             </select>
+            <div class="fhelper">Alto: el sistema bloquea de inmediato cualquier comunicacion. Medio: genera alerta pero permite el trafico. Bajo: solo deja un registro sin interrumpir.</div>
           </div>
 
           <button class="btn btn-danger btn-full" onclick="addBlacklist()">
@@ -312,7 +321,7 @@
             <label class="flabel" for="adm-email"><i class="fas fa-envelope"></i> Correo del administrador</label>
             <input class="finput" id="adm-email" type="email"
               placeholder="admin@institucion.edu" autocomplete="off">
-            <div class="fhelper">Las alertas criticas se enviaran a este correo.</div>
+            <div class="fhelper">Cuando el sistema detecte una amenaza grave, enviara un aviso automatico a este correo. Asegurese de que sea una cuenta que revise con frecuencia.</div>
           </div>
 
           <button class="btn btn-primary btn-full" onclick="saveEmail()" style="margin-bottom:14px;">
