@@ -1,5 +1,5 @@
 /* ─── Config ─────────────────────────────────────────────────────────────────── */
-const API   = 'http://192.168.1.80:5000';
+const API   = 'http://127.0.0.1:5000';
 const TICK  = 5000;   // ms
 
 /* ─── State ──────────────────────────────────────────────────────────────────── */
@@ -23,7 +23,7 @@ function switchView(v) {
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + v).classList.add('active');
   document.getElementById('tab-' + v).classList.add('active');
-  if (v === 'control') loadWhitelist();
+  if (v === 'control') { loadWhitelist(); loadBlacklist(); }
 }
 
 /* ─── Progress bar ───────────────────────────────────────────────────────────── */
@@ -330,15 +330,76 @@ async function addBlacklist() {
   const ip     = document.getElementById('bl-ip').value.trim();
   const reason = document.getElementById('bl-reason').value.trim();
   const sev    = document.getElementById('bl-sev').value;
-  if (!ip)         { toast('Ingrese una direccion IP.', 'warn'); return; }
+  if (!ip)          { toast('Ingrese una direccion IP.', 'warn'); return; }
   if (!validIP(ip)) { toast('Formato de IP invalido. Ej: 203.0.113.45', 'err'); return; }
+  const nivelMap = { high: 'ALTO', medium: 'MEDIO', low: 'BAJO' };
   try {
-    const r = await apiFetch('POST', '/api/blacklist', { ip, reason, severity: sev });
+    const r = await apiFetch('POST', '/api/blacklist', {
+      ip,
+      tipo_riesgo: reason || 'Desconocido',
+      nivel:       nivelMap[sev] ?? 'ALTO',
+      fuente:      'Manual'
+    });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     toast('IP "' + ip + '" agregada a la lista negra.', 'ok');
     document.getElementById('bl-ip').value     = '';
     document.getElementById('bl-reason').value = '';
+    loadBlacklist();
   } catch(e) { toast('Error al agregar: ' + e.message, 'err'); }
+}
+
+async function loadBlacklist() {
+  const tbody = document.getElementById('bl-body');
+  const cnt   = document.getElementById('bl-count');
+  tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><p>Cargando...</p></div></td></tr>';
+  try {
+    const r = await apiFetch('GET', '/api/blacklist');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d   = await r.json();
+    const arr = d.ips_peligrosas ?? [];
+    if (cnt) cnt.textContent = arr.length + ' entrada' + (arr.length !== 1 ? 's' : '');
+    if (!arr.length) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="fas fa-ban"></i><p>La lista negra esta vacia.</p></div></td></tr>';
+      return;
+    }
+    const nivelCls = { CRITICO: 'b-err', ALTO: 'b-err', MEDIO: 'b-warn', BAJO: 'b-ok', DEMO: 'b-muted' };
+    tbody.innerHTML = arr.map(e => {
+      const ip     = esc(e.ip          ?? '—');
+      const motivo = esc(e.tipo_riesgo ?? '—');
+      const nivel  = String(e.nivel    ?? 'ALTO').toUpperCase();
+      const dt     = esc(e.created_at  ?? '');
+      const idVal  = escA(e.ip         ?? '');
+      const cls    = nivelCls[nivel] ?? 'b-muted';
+      return `<tr>
+        <td><span class="code-tag">${ip}</span></td>
+        <td class="dim">${motivo}</td>
+        <td><span class="badge ${cls}">${esc(nivel)}</span></td>
+        <td class="dim">${dt || '—'}</td>
+        <td style="text-align:center">
+          <button class="btn btn-danger btn-sm" onclick="removeBL('${idVal}','${ip}')">
+            <i class="fas fa-trash"></i> Eliminar
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty"><i class="fas fa-triangle-exclamation" style="color:var(--red)"></i><p>Error: ${esc(e.message)}</p></div></td></tr>`;
+  }
+}
+
+function removeBL(ip, label) {
+  openModal(
+    'Eliminar "' + label + '" de la lista negra',
+    'Esta a punto de eliminar <strong>' + label + '</strong> de la lista negra. La IP dejara de generar alertas criticas a partir de ese momento.',
+    async () => {
+      try {
+        const r = await apiFetch('DELETE', '/api/blacklist/' + encodeURIComponent(ip));
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        toast('"' + label + '" eliminado de la lista negra.', 'ok');
+        loadBlacklist();
+      } catch(e) { toast('Error al eliminar: ' + e.message, 'err'); }
+    }
+  );
 }
 
 /* ─── Admin config ───────────────────────────────────────────────────────────── */

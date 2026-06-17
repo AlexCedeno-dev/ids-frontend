@@ -404,6 +404,34 @@
       </div>
     </div>
 
+    <!-- Blacklist table -->
+    <div class="card">
+      <div class="card-hdr">
+        <i class="fas fa-ban" style="color:var(--red)"></i>
+        <span class="card-title">Lista Negra Actual</span>
+        <span class="card-badge" id="bl-count">0 entradas</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="loadBlacklist()">
+          <i class="fas fa-rotate"></i> Actualizar
+        </button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>IP</th>
+              <th>Motivo del bloqueo</th>
+              <th>Nivel de amenaza</th>
+              <th>Fecha de alta</th>
+              <th style="text-align:center;">Accion</th>
+            </tr>
+          </thead>
+          <tbody id="bl-body">
+            <tr><td colspan="5"><div class="empty"><i class="fas fa-ban"></i><p>Cargando lista negra...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div><!-- /view-control -->
 
 </main>
